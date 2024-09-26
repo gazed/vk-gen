@@ -1,9 +1,9 @@
 # syscall
 
-This project is a quick hack of the original vk-gen to use syscall instead of cgo.
+This project is a hack of the original vk-gen to use syscall instead of cgo.
 Currently only intended for use on win32.
 
-* get version 1.2 of the vk.xml specification, vk-gen breaks on the latest vk.xml spec.
+* get version 1.2 of the vk.xml specification (vk-gen breaks on the latest vk.xml spec).
 ```
 curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/registry/vk.xml > vk.xml
 ```
@@ -17,6 +17,8 @@ curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/regi
 ```
 cd vk;  go generate
 ```
+
+Original README content is below.
 
 # vk-gen
 
