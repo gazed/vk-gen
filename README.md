@@ -1,3 +1,23 @@
+# syscall
+
+This project is a quick hack of the original vk-gen to use syscall instead of cgo.
+Currently only intended for use on win32.
+
+* get version 1.2 of the vk.xml specification, vk-gen breaks on the latest vk.xml spec.
+```
+curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/registry/vk.xml > vk.xml
+```
+
+* run the vk-gen command to get the windows bindings.
+```
+./vk-gen.exe -platform win32
+```
+
+* generate the enum strings.
+```
+cd vk;  go generate
+```
+
 # vk-gen
 
 vk-gen is a tool used to create Go bindings for the Vulkan graphics API. It uses the Vulkan XML specification to

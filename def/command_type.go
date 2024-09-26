@@ -445,6 +445,10 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 		inputSpecString,
 		returnSpecString)
 
+	// add variable for Syscalls that need to process the result.
+	if trampolineReturns != nil {
+		fmt.Fprintf(preamble, "  var rsys uintptr\n")
+	}
 	fmt.Fprintln(w, preamble.String())
 
 	t.printTrampolineCall(w, funcTrampolineParams, trampolineReturns)
@@ -482,15 +486,22 @@ func trampStringFromParams(sl []*commandParam) string {
 func (t *commandType) printTrampolineCall(w io.Writer, trampParams []*commandParam, returnParam *commandParam) {
 	trampParamsString := trampStringFromParams(trampParams)
 
+	// lazy init the function handle.
+	fmt.Fprintf(w, "  if %s.fnHandle == nil {\n", t.RegistryName())
+	fmt.Fprintf(w, "    %s.fnHandle = dlHandle.NewProc(\"%s\")\n", t.RegistryName(), t.RegistryName())
+	fmt.Fprintf(w, "  }\n")
+
 	if returnParam != nil {
 		if returnParam.resolvedType.IsIdenticalPublicAndInternal() {
-			fmt.Fprintf(w, "  %s = %s(execTrampoline(%s%s))\n", returnParam.publicName, returnParam.resolvedType.PublicName(), t.RegistryName(), trampParamsString)
+			fmt.Fprintf(w, "  rsys,_,_ = syscall.SyscallN(%s.fnHandle.Addr()%s)\n", t.RegistryName(), trampParamsString)
+			fmt.Fprintf(w, "  %s = %s(rsys)\n", returnParam.publicName, returnParam.resolvedType.PublicName())
 		} else {
-			fmt.Fprintf(w, "  rval := %s(execTrampoline(%s%s))\n", returnParam.resolvedType.InternalName(), t.RegistryName(), trampParamsString)
+			fmt.Fprintf(w, "  rsys,_,_ = syscall.SyscallN(%s.fnHandle.Addr()%s)\n", t.RegistryName(), trampParamsString)
+			fmt.Fprintf(w, "  rval := %s(rsys)\n", returnParam.resolvedType.InternalName())
 			fmt.Fprintf(w, "  %s = %s\n", returnParam.publicName, returnParam.resolvedType.TranslateToPublic("rval"))
 		}
 	} else {
-		fmt.Fprintf(w, "  execTrampoline(%s%s)\n", t.RegistryName(), trampParamsString)
+		fmt.Fprintf(w, "  syscall.SyscallN(%s.fnHandle.Addr()%s)\n", t.RegistryName(), trampParamsString)
 	}
 }
 
