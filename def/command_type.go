@@ -475,6 +475,9 @@ func trampStringFromParams(sl []*commandParam) string {
 	for _, param := range sl {
 		if param.resolvedType.Category() == CatPointer {
 			fmt.Fprintf(sb, ", uintptr(unsafe.Pointer(%s))", param.internalName)
+		} else if param.typeName == "float" {
+			// recommended way to handle uintptr float conversions
+			fmt.Fprintf(sb, ", uintptr(math.Float32bits(%s))", param.internalName)
 		} else {
 			fmt.Fprintf(sb, ", uintptr(%s)", param.internalName)
 		}

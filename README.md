@@ -8,12 +8,14 @@ Currently only intended for use on win32.
 curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/registry/vk.xml > vk.xml
 ```
 
-* run the vk-gen command to get the windows bindings.
+* run the vk-gen command to get the windows bindings
+  (requires goimports: `go install golang.org/x/tools/cmd/goimports@latest`)
 ```
 ./vk-gen.exe -platform win32
 ```
 
-* generate the enum strings.
+* generate the enum strings
+  (requires stringer: `go install golang.org/x/tools/cmd/stringer@latest`)
 ```
 cd vk;  go generate
 ```
