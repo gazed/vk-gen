@@ -2,9 +2,9 @@ package def
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -38,13 +38,11 @@ func (t *includeType) Resolve(tr TypeRegistry, vr ValueRegistry) *IncludeSet {
 
 func ReadIncludeTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, _ ValueRegistry, api string) {
 	queryString := fmt.Sprintf("//types/type[@category='include' and (@api='%s' or @api='')]", api)
-
 	for _, node := range xmlquery.Find(doc, queryString) {
 		typ := NewIncludeTypeFromXML(node)
 		if tr[typ.RegistryName()] != nil {
-			logrus.WithField("registry name", typ.RegistryName()).Warn("Overwriting include type in registry")
+			slog.Warn("Overwriting include type in registry", "registry name", typ.RegistryName())
 		}
-
 		tr[typ.RegistryName()] = typ
 	}
 }
@@ -74,7 +72,7 @@ func NewOrUpdateIncludeTypeFromJSON(key string, exception gjson.Result, tr TypeR
 	existing := tr[key]
 	var updatedEntry *includeType
 	if existing == nil {
-		logrus.WithField("registry type", key).Info("no existing registry entry for include type")
+		slog.Info("no existing registry entry for include type", "registry type", key)
 		updatedEntry = &includeType{}
 		updatedEntry.registryName = key
 		updatedEntry.publicName = RenameIdentifier(key)

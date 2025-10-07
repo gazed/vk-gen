@@ -38,15 +38,15 @@
     },
 
     "handle": {
-        "VK_DEFINE_HANDLE": { 
-            "publicName": "handle", 
+        "VK_DEFINE_HANDLE": {
+            "publicName": "handle",
             "underlyingType": "uintptr_t",
             "constants": {
                 "VK_NULL_HANDLE" : "0"
             }
         },
-        "VK_DEFINE_NON_DISPATCHABLE_HANDLE": { 
-            "publicName": "nonDispatchableHandle", 
+        "VK_DEFINE_NON_DISPATCHABLE_HANDLE": {
+            "publicName": "nonDispatchableHandle",
             "underlyingType": "uint64_t",
             "comment": "The Vulkan spec specifically defines a handle as a platform pointer type (i.e., could be 32 bits) and a non-dispatchable handle as a 64 bit type."
         },
@@ -99,6 +99,7 @@
             "go:imports": []
         },
         "macos": {
+            "!comment": "considered deprecated and has been superseded by metal",
             "go:build": "darwin",
             "go:imports": []
         },
@@ -129,13 +130,13 @@
     },
 
     "external" : {
-        "int8_t":  { "go:type": "int8", "primitive": true, 
+        "int8_t":  { "go:type": "int8", "primitive": true,
             "!comment": "Primitive indicates a direct replacement? Necessary or not?" },
         "uint8_t": { "go:type": "uint8", "primitive": true },
         "int16_t":  { "go:type": "int16", "primitive": true },
         "uint16_t":  { "go:type": "uint16", "primitive": true },
         "int32_t":  { "go:type": "int32", "primitive": true },
-        "uint32_t": { 
+        "uint32_t": {
             "go:type": "uint32", "primitive": true,
             "enums": {
                 "VK_REMAINING_MIP_LEVELS": "^uint32(0)",
@@ -159,9 +160,9 @@
         },
         "uintptr_t" : { "go:type": "uintptr" },
         "size_t":  { "go:type": "uintptr", "primitive": true },
-        "char":  { 
-            "go:type": "byte", 
-            "primitive": true,      
+        "char":  {
+            "go:type": "byte",
+            "primitive": true,
             "go:translatePublic": "stringToCharPtr",
             "go:translateInternal": "sys_stringToBytePointer"
         },
@@ -175,8 +176,8 @@
         "int":  { "go:type": "int32", "primitive": true },
         "void": {"go:type": "byte"},
         "void*" : { "go:type": "unsafe.Pointer" },
-        
-        "char*" : { 
+
+        "char*" : {
             "go:type": "string",
             "go:internalType": "[]byte",
             "go:translatePublic": "stringToCharPtr",
@@ -188,10 +189,10 @@
             "go:translatePublic": "stringSliceToCharPtrPtr",
             "go:translateInternal": "charPtrPtrToBytePtrSlice"
         },
-        
+
         "!empty_struct": { "go:type": "struct{}" },
         "!pointer": { "go:type": "unsafe.Pointer" },
-        
+
         "HANDLE": { "go:type": "windows.Handle" },
         "HINSTANCE": { "go:type": "windows.Handle" },
         "HWND": { "go:type": "windows.HWND" },
@@ -273,7 +274,7 @@
         "windows.h": {
             "go:imports": ["golang.org/x/sys/windows"]
         },
-        "vk_platform": {}   
+        "vk_platform": {}
     },
 
     "basetype": {
@@ -283,7 +284,7 @@
             "go:type": "bool",
             "go:translatePublic": "translatePublic_Bool32",
             "go:translateInternal": "translateInternal_Bool32"
-            
+
         },
         "!comment": "TODO: Vulkan pointers to functions should be parsed from the XML file to automatically handle future pointer types. (<type category=funcpointer>) Note that actually providing a custom callback function to the API might not be simple or even needed.",
         "PFN_vkAllocationFunction": {

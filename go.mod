@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/antchfx/xmlquery v1.3.13
 	github.com/iancoleman/strcase v0.2.0
-	github.com/sirupsen/logrus v1.9.0
 	github.com/tidwall/gjson v1.14.4
 	golang.org/x/sys v0.13.0
 )

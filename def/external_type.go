@@ -3,10 +3,10 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -45,7 +45,7 @@ func ReadExternalTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, vr ValueRegis
 	for _, node := range xmlquery.Find(doc, queryString) {
 		typ := NewExternalTypeFromXML(node)
 		if tr[typ.RegistryName()] != nil {
-			logrus.WithField("registry name", typ.RegistryName()).Warn("Overwriting external type in registry")
+			slog.Warn("Overwriting external type in registry", "registry name", typ.RegistryName())
 		}
 
 		tr[typ.RegistryName()] = typ
@@ -81,7 +81,7 @@ func NewOrUpdateExternalTypeFromJSON(key string, exception gjson.Result, tr Type
 	var updatedEntry *externalType
 
 	if existing == nil {
-		logrus.WithField("registry type", key).Info("no existing registry entry for external type")
+		slog.Info("no existing registry entry for external type", "registry type", key)
 		updatedEntry = &externalType{}
 		updatedEntry.registryName = key
 		updatedEntry.publicName = RenameIdentifier(key)
@@ -107,7 +107,7 @@ func NewOrUpdateExternalValueFromJSON(key, value string, td TypeDefiner, tr Type
 	var updatedEntry *enumValue
 
 	if existing == nil {
-		logrus.WithField("registry type", key).Info("no existing registry entry for external type")
+		slog.Info("no existing registry entry for external type", "registry type", key)
 		updatedEntry = &enumValue{}
 		updatedEntry.registryName = key
 	} else {

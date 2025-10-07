@@ -3,10 +3,10 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 )
 
 type enumType struct {
@@ -65,7 +65,7 @@ func ReadEnumTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, vr ValueRegistry,
 	for _, node := range xmlquery.Find(doc, queryString) {
 		newType := NewEnumTypeFromXML(node)
 		if tr[newType.RegistryName()] != nil {
-			logrus.WithField("registry name", newType.RegistryName()).Warn("Overwriting enum type in registry")
+			slog.Warn("Overwriting enum type in registry", "registry name", newType.RegistryName())
 		}
 		tr[newType.RegistryName()] = newType
 

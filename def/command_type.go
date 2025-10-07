@@ -3,13 +3,13 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/antchfx/xmlquery"
 	"github.com/iancoleman/strcase"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -26,6 +26,11 @@ type commandType struct {
 	returnParams      []*commandParam
 	bindingParamCount int
 }
+
+// command bindings can be generated either as cgo or syscall.
+// Syscalls currently only work on windows, but the benefit is
+// that cgo, and the need for a C compiler, are completely avoided.
+var CommandIsSyscall bool
 
 // Exceptions to camelCase rules used for function return params
 func init() {
@@ -55,16 +60,14 @@ func (t *commandType) Resolve(tr TypeRegistry, vr ValueRegistry) *IncludeSet {
 	if t.isResolved {
 		return NewIncludeSet()
 	}
-
 	iset := t.genericType.Resolve(tr, vr)
-
 	if !t.IsAlias() && t.returnTypeName != "" {
 
 		t.resolvedReturnType = tr[t.returnTypeName]
 		if t.resolvedReturnType == nil {
-			log.WithField("registry name", t.registryName).
-				WithField("return registry name", t.returnTypeName).
-				Error("return type was not found while resolving command")
+			slog.Error("return type was not found while resolving command",
+				"registry name", t.registryName,
+				"return registry name", t.returnTypeName)
 		} else {
 			iset.MergeWith(t.resolvedReturnType.Resolve(tr, vr))
 
@@ -73,12 +76,9 @@ func (t *commandType) Resolve(tr TypeRegistry, vr ValueRegistry) *IncludeSet {
 
 	for _, p := range t.parameters {
 		p.parentCommand = t
-
 		iset.MergeWith(p.Resolve(tr, vr))
 	}
-
 	iset.ResolvedTypes[t.registryName] = t
-
 	t.isResolved = true
 	return iset
 }
@@ -144,7 +144,6 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 						fmt.Fprintln(preamble)
 
 						funcTrampolineParams = append(funcTrampolineParams, p)
-
 					} else {
 						// Parameter can be directly used (once we get a pointer
 						// to the first element)
@@ -261,7 +260,11 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 						if p.lenMemberParam.isLenMemberFor[len(p.lenMemberParam.isLenMemberFor)-1] == p {
 							// If there is more than one array to allocate, make sure we only call trampoline on the last one
 							fmt.Fprintf(epilogue, "// Trampoline call after last array allocation\n")
-							t.printTrampolineCall(epilogue, funcTrampolineParams, trampolineReturns)
+							if CommandIsSyscall {
+								t.printSyscallTrampolineCall(epilogue, funcTrampolineParams, trampolineReturns)
+							} else {
+								t.printCgoTrampolineCall(epilogue, funcTrampolineParams, trampolineReturns)
+							}
 							fmt.Fprintln(epilogue)
 
 							// If the output requires translation, iterate the slice and translate here
@@ -342,9 +345,7 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 					} else {
 						if p.resolvedType.IsIdenticalPublicAndInternal() {
 							fmt.Fprintf(preamble, "// %s is a binding-allocated single return value and will be populated by Vulkan\n", p.publicName)
-
 							p.internalName = "ptr_" + p.internalName // This should really be done in resolve, not here
-
 							fmt.Fprintf(preamble, "  %s := &%s\n", p.internalName, p.publicName)
 							fmt.Fprintln(preamble)
 						} else {
@@ -365,9 +366,7 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 								// Vulkan *must* be accepting a pointer, if it is planning to fill in any kind of data
 								panic("found non-pointer return value from vulkan!")
 							}
-
 							fmt.Fprintln(preamble)
-
 						}
 
 						// rewrite the return param as not a pointer
@@ -413,7 +412,6 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 				funcTrampolineParams = append(funcTrampolineParams, p)
 			}
 		}
-
 	}
 
 	specStringFromParams := func(sl []*commandParam) (string, bool) {
@@ -431,7 +429,6 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 			fmt.Fprintf(sb, ", r error")
 		}
 		return strings.TrimPrefix(sb.String(), ", "), remapResultToError
-
 	}
 
 	t.bindingParamCount = len(funcTrampolineParams)
@@ -447,11 +444,15 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 
 	// add variable for Syscalls that need to process the result.
 	if trampolineReturns != nil {
-		fmt.Fprintf(preamble, "  var rsys uintptr\n")
+		fmt.Fprintf(preamble, "  var rsys C.uintptr_t\n")
 	}
 	fmt.Fprintln(w, preamble.String())
 
-	t.printTrampolineCall(w, funcTrampolineParams, trampolineReturns)
+	if CommandIsSyscall {
+		t.printSyscallTrampolineCall(w, funcTrampolineParams, trampolineReturns)
+	} else {
+		t.printCgoTrampolineCall(w, funcTrampolineParams, trampolineReturns)
+	}
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, epilogue.String())
@@ -470,24 +471,65 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 		t.RegistryName(), t.RegistryName(), t.bindingParamCount, t.resolvedReturnType != nil)
 }
 
-func trampStringFromParams(sl []*commandParam) string {
+func trampStringFromParams(sl []*commandParam, trampNum int) string {
 	sb := &strings.Builder{}
 	for _, param := range sl {
 		if param.resolvedType.Category() == CatPointer {
-			fmt.Fprintf(sb, ", uintptr(unsafe.Pointer(%s))", param.internalName)
-		} else if param.typeName == "float" {
-			// recommended way to handle uintptr float conversions
-			fmt.Fprintf(sb, ", uintptr(math.Float32bits(%s))", param.internalName)
+			fmt.Fprintf(sb, ", C.uintptr_t(uintptr(unsafe.Pointer(%s)))", param.internalName)
 		} else {
-			fmt.Fprintf(sb, ", uintptr(%s)", param.internalName)
+			fmt.Fprintf(sb, ", C.uintptr_t(uintptr(%s))", param.internalName)
 		}
 	}
+
+	// fill out the unused trampoline parameters.
+	filler := trampNum - len(sl)
+	for i := 0; i < filler; i++ {
+		fmt.Fprintf(sb, ", 0")
+	}
+
 	// Note that the leading ", " is not trimmed
 	return sb.String()
 }
 
-func (t *commandType) printTrampolineCall(w io.Writer, trampParams []*commandParam, returnParam *commandParam) {
-	trampParamsString := trampStringFromParams(trampParams)
+func (t *commandType) printCgoTrampolineCall(w io.Writer, trampParams []*commandParam, returnParam *commandParam) {
+	rname := t.RegistryName()
+	trampNum := 3
+	switch len(trampParams) {
+	case 1, 2, 3:
+		trampNum = 3
+	case 4, 5, 6:
+		trampNum = 6
+	case 7, 8, 9:
+		trampNum = 9
+	case 10, 11, 12:
+		trampNum = 12
+	case 13, 14, 15:
+		trampNum = 15
+	default:
+		slog.Error("unexpected number of call parameters", "name", rname, "count", len(trampParams))
+	}
+	trampParamsString := trampStringFromParams(trampParams, trampNum)
+
+	// lazy init the function handle.
+	fmt.Fprintf(w, "  if %s.fnHandle == nil {\n", rname)
+	fmt.Fprintf(w, "    %s.fnHandle = C.SymbolFromName( dlHandle, unsafe.Pointer(sys_stringToBytePointer(\"%s\")))\n", rname, rname)
+	fmt.Fprintf(w, "  }\n")
+
+	if returnParam != nil {
+		if returnParam.resolvedType.IsIdenticalPublicAndInternal() {
+			fmt.Fprintf(w, "  rsys = C.Trampoline%d(%s.fnHandle%s)\n", trampNum, t.RegistryName(), trampParamsString)
+			fmt.Fprintf(w, "  %s = %s(uintptr(rsys))\n", returnParam.publicName, returnParam.resolvedType.PublicName())
+		} else {
+			fmt.Fprintf(w, "  rsys = C.Trampoline%d(%s.fnHandle%s)\n", trampNum, t.RegistryName(), trampParamsString)
+			fmt.Fprintf(w, "  %s = %s(uintptr(rsys))\n", returnParam.publicName, returnParam.resolvedType.TranslateToPublic("rval"))
+		}
+	} else {
+		fmt.Fprintf(w, "  C.Trampoline%d(%s.fnHandle%s)\n", trampNum, t.RegistryName(), trampParamsString)
+	}
+}
+
+func (t *commandType) printSyscallTrampolineCall(w io.Writer, trampParams []*commandParam, returnParam *commandParam) {
+	trampParamsString := trampStringFromParams(trampParams, len(trampParams))
 
 	// lazy init the function handle.
 	fmt.Fprintf(w, "  if %s.fnHandle == nil {\n", t.RegistryName())

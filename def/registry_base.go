@@ -1,16 +1,15 @@
 package def
 
 import (
-	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/antchfx/xmlquery"
 	"github.com/tidwall/gjson"
 )
-
-//go:generate stringer -type TypeCategory
 
 type TypeCategory int
 
@@ -38,6 +37,55 @@ const (
 
 	CatMaximum
 )
+
+// only this type needs strings, so define here to
+// remove dependency on stringer utility
+var typeCategoryStrings = map[TypeCategory]string{
+	CatNone:     "CatNone",
+	CatExten:    "CatExten",
+	CatDefine:   "CatDefine",
+	CatInclude:  "CatInclude",
+	CatExternal: "CatExternal",
+	CatHandle:   "CatHandle",
+	CatBasetype: "CatBasetype",
+	CatEnum:     "CatEnum",
+	CatBitmask:  "CatBitmask",
+	CatStruct:   "CatStruct",
+	CatUnion:    "CatUnion",
+	CatPointer:  "CatPointer",
+	CatArray:    "CatArray",
+	CatCommand:  "CatCommand",
+	CatMaximum:  "CatMaximum",
+}
+
+func (tc TypeCategory) String() string {
+	if str, ok := typeCategoryStrings[tc]; ok {
+		return str
+	}
+	slog.Error("invalid TypeCategory", "typeCategory", tc)
+	return ""
+}
+
+// Filename returns an output filename for each category.
+func (tc TypeCategory) Filename(platformName string) (filename string) {
+	filename = strings.ToLower(strings.TrimPrefix(tc.String(), "Cat"))
+	switch tc {
+	case CatCommand:
+		switch platformName {
+		case "":
+			// needs cgo and syscall.
+		case "win32":
+			filename += "_" + platformName + "_syscall"
+		default:
+			filename += "_" + platformName + "_cgo"
+		}
+	default:
+		if platformName != "" {
+			filename += "_" + platformName
+		}
+	}
+	return filename
+}
 
 type fnReadFromXML func(doc *xmlquery.Node, tr TypeRegistry, vr ValueRegistry, api string)
 type fnReadFromJSON func(exceptions gjson.Result, tr TypeRegistry, vr ValueRegistry)
@@ -125,13 +173,9 @@ type TypeDefiner interface {
 
 type Printer interface {
 	RegisterImports(reg map[string]bool)
-	PrintGlobalDeclarations(io.Writer, int, bool)
-	PrintFileInitContent(io.Writer)
 	PrintPublicDeclaration(io.Writer)
 	PrintInternalDeclaration(io.Writer)
 	PrintPublicToInternalTranslation(w io.Writer, inputVar, outputVar, lenSpec string)
-
-	// PrintTranslateToPublic(w io.Writer, inputVar, outputVar string)
 	PrintTranslateToInternal(w io.Writer, inputVar, outputVar string)
 	TranslateToPublic(inputVar string) string
 	TranslateToInternal(inputVar string) string
@@ -196,35 +240,4 @@ func (a ByValuePublicName) Less(i, j int) bool {
 		return iNum < jNum
 	}
 	return a[i].PublicName() < a[j].PublicName()
-}
-
-func WriteStringerCommands(w io.Writer, defs []TypeDefiner, cat TypeCategory, filenameBase string) {
-	typesPerCallLimit := 32
-
-	types := ""
-	i := 0
-	fileCount := 0
-
-	// catString := strings.ToLower(cat.String())
-	// catString := strings.ToLower(strings.TrimPrefix(cat.String(), "Cat"))
-
-	for j, v := range defs {
-
-		if v.Category() == cat && len(v.AllValues()) > 0 {
-			types += v.PublicName() + ","
-			i++
-		} else {
-			continue
-		}
-
-		if i == typesPerCallLimit-1 || j == len(defs)-1 { // Limit the number of types per call to stringer
-			outFile := fmt.Sprintf("%s_string_%d.go", filenameBase, fileCount)
-			types = types[:len(types)-1]
-			fmt.Fprintf(w, "//go:generate stringer -output=%s -type=%s\n", outFile, types)
-
-			types = ""
-			fileCount++
-			i = 0
-		}
-	}
 }

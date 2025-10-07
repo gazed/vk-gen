@@ -3,11 +3,12 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
+	"os"
 	"regexp"
 	"unsafe"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -61,8 +62,7 @@ func ReadDefineTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, _ ValueRegistry
 	for _, node := range xmlquery.Find(doc, queryString) {
 		newType := NewDefineTypeFromXML(node)
 		if tr[newType.RegistryName()] != nil {
-			logrus.WithField("registry name", newType.RegistryName()).
-				Warn("Attempted overwrite of define type from XML\n")
+			slog.Warn("Attempted overwrite of define type from XML\n", "registry name", newType.RegistryName())
 		} else {
 			tr[newType.RegistryName()] = newType
 		}
@@ -129,9 +129,10 @@ func ReadDefineExceptionsFromJSON(exceptions gjson.Result, tr TypeRegistry, vr V
 				delete(tr, key.String())
 				return true
 			} else {
-				logrus.WithField("key", key.String()).
-					WithField("value", exVal.String()).
-					Fatal("Fatal error when reading define exceptions: value for this key must be an object or the string \"!ignore\"")
+				slog.Error(`Fatal error when reading define exceptions: value for this key must be an object or the string "!ignore"`,
+					"key", key.String(),
+					"value", exVal.String())
+				os.Exit(-1)
 			}
 		}
 

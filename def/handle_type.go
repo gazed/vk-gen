@@ -3,10 +3,10 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -49,7 +49,7 @@ func ReadHandleTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, _ ValueRegistry
 	for _, node := range xmlquery.Find(doc, queryString) {
 		newType := NewHandleTypeFromXML(node)
 		if tr[newType.RegistryName()] != nil {
-			logrus.WithField("registry name", newType.RegistryName()).Warn("Overwriting handle type in registry")
+			slog.Warn("Overwriting handle type in registry", "registry name", newType.RegistryName())
 		}
 		tr[newType.RegistryName()] = newType
 	}

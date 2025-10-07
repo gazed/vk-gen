@@ -3,11 +3,11 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"regexp"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -64,9 +64,9 @@ func (t *structType) Resolve(tr TypeRegistry, vr ValueRegistry) *IncludeSet {
 		t.resolvedAliasType = tr[t.aliasTypeName]
 
 		if t.resolvedAliasType == nil {
-			logrus.WithField("registry name", t.registryName).
-				WithField("alias name", t.aliasTypeName).
-				Error("alias not found in registry while resolving type")
+			slog.Error("alias not found in registry while resolving type",
+				"registry name", t.registryName,
+				"alias name", t.aliasTypeName)
 			return NewIncludeSet()
 		} else {
 			t.resolvedAliasType.Resolve(tr, vr)

@@ -1,10 +1,10 @@
 package def
 
 import (
+	"log/slog"
 	"strconv"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 )
 
 type extensionSet struct {
@@ -40,7 +40,9 @@ func ReadAllExtensionsFromXML(doc *xmlquery.Node, tr TypeRegistry, vr ValueRegis
 		ext.IncludeSet = NewIncludeSet()
 
 		if num, err := strconv.Atoi(extNode.SelectAttr("number")); err != nil {
-			logrus.WithError(err).WithField("extension name", ext.extName).Error("Could not convert number attribute on extension")
+			slog.Error("Could not convert number attribute on extension",
+				"error", err,
+				"extension name", ext.extName)
 			continue
 		} else {
 			ext.extNumber = num

@@ -1,26 +1,20 @@
 # syscall
 
-This project is a hack of the original vk-gen to use syscall instead of cgo.
-Currently only intended for use on win32.
+This project is a hack of the original vk-gen to use syscall on windows instead of cgo.
 
-* get version 1.2 of the vk.xml specification (vk-gen breaks on the latest vk.xml spec).
+* get version 1.2 of the vk.xml specification. Latest spec has not been tested.
 ```
 curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/registry/vk.xml > vk.xml
 ```
 
-* run the vk-gen command to get the windows bindings
-  (requires goimports: `go install golang.org/x/tools/cmd/goimports@latest`)
+* run the vk-gen command to create the vulkan bindings.
+  This requires goimports  `go install golang.org/x/tools/cmd/goimports@latest`
 ```
-./vk-gen.exe -platform win32
-```
-
-* generate the enum strings
-  (requires stringer: `go install golang.org/x/tools/cmd/stringer@latest`)
-```
-cd vk;  go generate
+./vk-gen.exe
 ```
 
 Original README content is below.
+
 
 # vk-gen
 
@@ -28,7 +22,7 @@ vk-gen is a tool used to create Go bindings for the Vulkan graphics API. It uses
 generate all type definitions and native function calls for the API. It generates the code for
 [go-vk](https://github.com/bbredesen/go-vk), but it can just as well be used to create a modified binding set in your
 own projects (for example, excluding certain vendor extensions, including beta extensions, or to generate code from a
-specific version of the Vulkan headers). 
+specific version of the Vulkan headers).
 
 ## Basic Usage
 
@@ -39,7 +33,7 @@ Install: `go install github.com/bbredesen/vk-gen@latest`
 
 Download the latest registry file: `curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/registry/vk.xml > vk.xml`
 
-(Or, replace "main" in the URL above with the tagged version you want to generate against: e.g., 
+(Or, replace "main" in the URL above with the tagged version you want to generate against: e.g.,
 `https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/registry/vk.xml` for the last version 1.2 specification.)
 
 Run the tool: `vk-gen`
@@ -69,5 +63,5 @@ issue/PR will clean this up, but they don't hurt anything at the moment.
   to internal translation result. By default, vk-gen will use the size of the first member in the union, but that is
   not necessarily the largest member. This value must be a string and is copied to an array declaration. It can be
   anything that resolves to a constant in Go, though most typically it will be an integer value (represented as a
-  string). The value should be the aligned (?) data size in bytes of the largest member of the union. 
+  string). The value should be the aligned (?) data size in bytes of the largest member of the union.
 

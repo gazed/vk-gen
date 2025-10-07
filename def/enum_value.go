@@ -3,10 +3,10 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"strconv"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 )
 
 type enumValue struct {
@@ -159,10 +159,10 @@ func NewEnumValueFromXML(td TypeDefiner, elt *xmlquery.Node) *enumValue {
 
 		if offsetStr := elt.SelectAttr("offset"); offsetStr != "" {
 			if rval.offset, err = strconv.Atoi(offsetStr); err != nil {
-				logrus.WithField("registry name", rval.registryName).
-					WithField("offset", offsetStr).
-					WithError(err).
-					Error("could not convert enum offset string")
+				slog.Error("could not convert enum offset string",
+					"registry name", rval.registryName,
+					"offset", offsetStr,
+					"error", err)
 				return &rval
 			}
 		}
@@ -176,10 +176,10 @@ func NewEnumValueFromXML(td TypeDefiner, elt *xmlquery.Node) *enumValue {
 		extNumStr := elt.SelectAttr("extnumber")
 		if extNumStr != "" {
 			if rval.extNumber, err = strconv.Atoi(extNumStr); err != nil {
-				logrus.WithField("registry name", rval.registryName).
-					WithField("offset", extNumStr).
-					WithError(err).
-					Error("could not convert enum extension number")
+				slog.Error("could not convert enum extension number",
+					"registry name", rval.registryName,
+					"offset", extNumStr,
+					"error", err)
 				return &rval
 			}
 		}

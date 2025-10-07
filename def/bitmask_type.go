@@ -3,10 +3,10 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 )
 
 type bitmaskType struct {
@@ -55,7 +55,7 @@ func ReadBitmaskTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, vr ValueRegist
 	for _, node := range xmlquery.Find(doc, queryString) {
 		newType := NewBitmaskTypeFromXML(node)
 		if tr[newType.RegistryName()] != nil {
-			logrus.WithField("registry name", newType.RegistryName()).Warn("Overwriting bitmask type in registry")
+			slog.Warn("Overwriting bitmask type in registry", "registry name", newType.RegistryName())
 		}
 
 		// Attach bitmask to the associated enum. CatEnum must be read from the file first!

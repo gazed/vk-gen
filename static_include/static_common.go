@@ -2,9 +2,8 @@ package vk
 
 import (
 	"bytes"
+	"fmt"
 	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 // Vulkanizer allows conversion from go-vk style structs to Vulkan-native structs. This
@@ -32,22 +31,18 @@ func max(nums ...int) int {
 // Error implements the error interface
 // TODO: A way for commands to indicate if the Result code is an error for that command, or an unexpected return value?
 func (r Result) Error() string {
-	return r.String()
+	// hacked to avoid the stringer tool.
+	return fmt.Sprintf("%d", r) // r.String()
 }
 
 type vkCommand struct {
 	protoName string
 	argCount  int
 	hasReturn bool
-	fnHandle  *windows.LazyProc
+	fnHandle  unsafe.Pointer
 }
 
-var dlHandle *windows.LazyDLL
-
-func init() {
-	// this is a quick hack that ignores default override.
-	dlHandle = windows.NewLazyDLL("vulkan-1.dll")
-}
+var dlHandle unsafe.Pointer
 
 var overrideLibName string
 

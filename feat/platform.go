@@ -1,8 +1,9 @@
 package feat
 
 import (
+	"log/slog"
+
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -11,9 +12,8 @@ type PlatformRegistry map[string]*Platform
 type Platform struct {
 	platformName string
 	comment      string
-
-	GoBuildTag string
-	GoImports  []string
+	GoBuildTag   string
+	GoImports    []string
 
 	platformExtensionNames map[string]bool
 	extensions             map[string]*Extension
@@ -42,7 +42,7 @@ func NewPlatformFromXML(plNode *xmlquery.Node) *Platform {
 func NewOrUpdatePlatformFromJSON(key string, exception gjson.Result, existing *Platform) *Platform {
 	var updatedEntry *Platform = existing
 	if existing == nil {
-		logrus.WithField("registry type", key).Warn("no existing registry entry for platform type in exceptions.json")
+		slog.Warn("no existing registry entry for platform type in exceptions.json", "registry type", key)
 		updatedEntry = &Platform{
 			platformName:           key,
 			comment:                exception.Get("comment").String(),
@@ -67,15 +67,14 @@ func (p *Platform) IncludeExtension(e *Extension) {
 	p.extensions[e.Name()] = e
 }
 
-func (p *Platform) Extensions() map[string]*Extension {
-	return p.extensions
-}
+// func (p *Platform) Extensions() map[string]*Extension {
+// 	return p.extensions
+// }
 
 func (p *Platform) GeneratePlatformFeatures() *Feature {
 	rval := NewFeature()
 	for _, ext := range p.extensions {
 		rval.MergeWith(ext.Feature)
 	}
-
 	return rval
 }

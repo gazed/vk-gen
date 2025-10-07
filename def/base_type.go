@@ -3,10 +3,10 @@ package def
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -97,7 +97,7 @@ func ReadBaseTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, _ ValueRegistry, 
 	for _, node := range xmlquery.Find(doc, queryString) {
 		newType := NewBaseTypeFromXML(node)
 		if tr[newType.RegistryName()] != nil {
-			logrus.WithField("registry name", newType.RegistryName()).Warn("Overwriting base type in registry")
+			slog.Warn("Overwriting base type in registry", "registry name", newType.RegistryName())
 		}
 		tr[newType.RegistryName()] = newType
 	}
@@ -139,7 +139,7 @@ func NewOrUpdateBaseTypeFromJSON(key string, exception gjson.Result, tr TypeRegi
 	var updatedEntry *baseType
 
 	if existing == nil {
-		logrus.WithField("registry type", key).Info("no existing registry entry for external type")
+		slog.Info("no existing registry entry for external type", "registry type", key)
 		updatedEntry = &baseType{}
 		updatedEntry.registryName = key
 	} else {
