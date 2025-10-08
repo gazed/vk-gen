@@ -9,6 +9,15 @@ import "unsafe"
 // #include "dlload.h"
 import "C"
 
+var dlHandle unsafe.Pointer
+
+type vkCommand struct {
+	protoName string
+	argCount  int
+	hasReturn bool
+	fnHandle  unsafe.Pointer
+}
+
 // called once automatically on package init.
 func init() {
 	libName := "libMoltenVK.dylib"

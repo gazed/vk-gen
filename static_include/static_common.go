@@ -35,15 +35,6 @@ func (r Result) Error() string {
 	return fmt.Sprintf("%d", r) // r.String()
 }
 
-type vkCommand struct {
-	protoName string
-	argCount  int
-	hasReturn bool
-	fnHandle  unsafe.Pointer
-}
-
-var dlHandle unsafe.Pointer
-
 var overrideLibName string
 
 // OverrideDefaultVulkanLibrary allows you to set a specific Vulkan library name to be used in your program. For

@@ -9,9 +9,18 @@ func sys_stringToBytePointer(s string) *byte {
 	return p
 }
 
+var dlHandle *windows.LazyDLL
+
+type vkCommand struct {
+	protoName string
+	argCount  int
+	hasReturn bool
+	fnHandle  *windows.LazyProc
+}
+
 // called once automatically on package init.
 func init() {
-	libName = "vulkan-1.dll"
+	libName := "vulkan-1.dll"
 	if overrideLibName != "" {
 		libName = overrideLibName
 	}

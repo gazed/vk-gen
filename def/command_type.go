@@ -444,7 +444,11 @@ func (t *commandType) PrintPublicDeclaration(w io.Writer) {
 
 	// add variable for Syscalls that need to process the result.
 	if trampolineReturns != nil {
-		fmt.Fprintf(preamble, "  var rsys C.uintptr_t\n")
+		if CommandIsSyscall {
+			fmt.Fprintf(preamble, "  var rsys uintptr\n")
+		} else {
+			fmt.Fprintf(preamble, "  var rsys C.uintptr_t\n")
+		}
 	}
 	fmt.Fprintln(w, preamble.String())
 
@@ -475,9 +479,17 @@ func trampStringFromParams(sl []*commandParam, trampNum int) string {
 	sb := &strings.Builder{}
 	for _, param := range sl {
 		if param.resolvedType.Category() == CatPointer {
-			fmt.Fprintf(sb, ", C.uintptr_t(uintptr(unsafe.Pointer(%s)))", param.internalName)
+			if CommandIsSyscall {
+				fmt.Fprintf(sb, ", uintptr(unsafe.Pointer(%s))", param.internalName)
+			} else {
+				fmt.Fprintf(sb, ", C.uintptr_t(uintptr(unsafe.Pointer(%s)))", param.internalName)
+			}
 		} else {
-			fmt.Fprintf(sb, ", C.uintptr_t(uintptr(%s))", param.internalName)
+			if CommandIsSyscall {
+				fmt.Fprintf(sb, ", uintptr(%s)", param.internalName)
+			} else {
+				fmt.Fprintf(sb, ", C.uintptr_t(uintptr(%s))", param.internalName)
+			}
 		}
 	}
 
