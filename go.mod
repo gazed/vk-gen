@@ -1,4 +1,4 @@
-module github.com/bbredesen/vk-gen
+module github.com/gazed/vk-gen
 
 go 1.18
 
