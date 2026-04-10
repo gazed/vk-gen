@@ -1,19 +1,19 @@
 module github.com/gazed/vk-gen
 
-go 1.18
+go 1.25.0
 
 require (
-	github.com/antchfx/xmlquery v1.3.13
-	github.com/iancoleman/strcase v0.2.0
-	github.com/tidwall/gjson v1.14.4
-	golang.org/x/sys v0.13.0
+	github.com/antchfx/xmlquery v1.5.1
+	github.com/iancoleman/strcase v0.3.0
+	github.com/tidwall/gjson v1.18.0
+	golang.org/x/sys v0.43.0
 )
 
 require (
-	github.com/antchfx/xpath v1.2.1 // indirect
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	github.com/antchfx/xpath v1.3.6 // indirect
+	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
+	github.com/tidwall/match v1.2.0 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 )

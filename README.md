@@ -2,9 +2,9 @@
 
 This project is a hack of the original vk-gen to use syscall on windows instead of cgo.
 
-* get version 1.2 of the vk.xml specification. Latest spec has not been tested.
+* get version 1.3 of the vk.xml specification, vk-gen needs updating to work with the 1.4 spec.
 ```
-curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.2.203/registry/vk.xml > vk.xml
+curl https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/v1.3.290/registry/vk.xml > vk.xml
 ```
 
 * run the vk-gen command to create the vulkan bindings.
