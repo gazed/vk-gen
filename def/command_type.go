@@ -709,9 +709,8 @@ func (p *commandParam) Resolve(tr TypeRegistry, vr ValueRegistry) *IncludeSet {
 }
 
 func ReadCommandTypesFromXML(doc *xmlquery.Node, tr TypeRegistry, vr ValueRegistry, api string) {
-	cQueryString := fmt.Sprintf("//commands/command[@api='%s' or not(@api)]", api)
-	exQueryString := fmt.Sprintf("//extension/command[@api='%s' or not(@api)]", api)
-
+	cQueryString := fmt.Sprintf("//commands/command[contains(@api,'%s') or not(@api)]", api)
+	exQueryString := fmt.Sprintf("//extension/command[contains(@api, '%s') or not(@api)]", api)
 	for _, commandNode := range append(xmlquery.Find(doc, cQueryString), xmlquery.Find(doc, exQueryString)...) {
 		val := NewCommandFromXML(commandNode, api)
 		tr[val.RegistryName()] = val

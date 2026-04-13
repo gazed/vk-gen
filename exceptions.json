@@ -154,7 +154,8 @@
         "VK_SUBPASS_EXTERNAL": "^uint32(0)",
         "VK_SHADER_UNUSED_KHR": "^uint32(0)",
         "VK_SHADER_INDEX_UNUSED_AMDX": "^uint32(0)",
-        "VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR": "^uint32(0)"
+        "VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR": "^uint32(0)",
+        "VK_PARTITIONED_ACCELERATION_STRUCTURE_PARTITION_INDEX_GLOBAL_NV": "^uint32(0)"
       }
     },
     "int64_t": { "go:type": "int64", "primitive": true },
@@ -177,7 +178,10 @@
       "go:type": "float32",
       "primitive": true,
       "enums": {
-        "VK_LOD_CLAMP_NONE": "1000.0"
+        "VK_LOD_CLAMP_NONE": "1000.0",
+        "VK_COMPUTE_OCCUPANCY_PRIORITY_LOW_NV":     "0.25",
+        "VK_COMPUTE_OCCUPANCY_PRIORITY_NORMAL_NV":  "0.50",
+        "VK_COMPUTE_OCCUPANCY_PRIORITY_HIGH_NV":    "0.75"
       }
     },
     "double": { "go:type": "float64", "primitive": true },
@@ -280,7 +284,9 @@
     "StdVideoAV1Profile": { "go:type": "int32" },
     "StdVideoAV1SequenceHeader": { "go:type": "int32" },
     "StdVideoDecodeAV1PictureInfo": { "go:type": "int32" },
-    "StdVideoDecodeAV1ReferenceInfo": { "go:type": "int32" }
+    "StdVideoDecodeAV1ReferenceInfo": { "go:type": "int32" },
+    "StdVideoVP9Profile": { "go:type": "int32" },
+    "StdVideoVP9Level": { "go:type": "int32" }
   },
 
   "include": {

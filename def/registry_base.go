@@ -224,7 +224,13 @@ func (a ByValue) Less(i, j int) bool {
 	iNum, err1 := strconv.Atoi(a[i].ValueString())
 	jNum, err2 := strconv.Atoi(a[j].ValueString())
 	if err1 == nil && err2 == nil {
+		if iNum == jNum {
+			return a[i].RegistryName() < a[j].RegistryName()
+		}
 		return iNum < jNum
+	}
+	if a[i].ValueString() == a[j].ValueString() {
+		return a[i].RegistryName() < a[j].RegistryName()
 	}
 	return a[i].ValueString() < a[j].ValueString()
 }

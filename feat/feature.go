@@ -29,6 +29,9 @@ func NewFeature() *Feature {
 // ReadFeatureFromXML imports vulkan feature data from the XML spec.
 // Additionaly the def.TypeRegistry and def.ValueRegistry are populated.
 func ReadFeatureFromXML(featureNode *xmlquery.Node, tr def.TypeRegistry, vr def.ValueRegistry) *Feature {
+	if featureNode == nil {
+		return nil // no such feature, likely using an older spec.
+	}
 	rval := NewFeature()
 	rval.apiName = featureNode.SelectAttr("api")
 	rval.featureName = featureNode.SelectAttr("name")
